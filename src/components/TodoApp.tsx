@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Play, CheckCircle, Clock, ImageIcon, X } from 'lucide-react';
+import { Plus, Trash2, Play, CheckCircle, Clock, ImageIcon, X, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import TourGuide from './TourGuide';
 
 interface TodoItem {
   id: string;
@@ -22,10 +23,13 @@ const TodoApp = () => {
   const [newTodo, setNewTodo] = useState('');
   const [isPastingImage, setIsPastingImage] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [showTour, setShowTour] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const savedTodos = localStorage.getItem('todos');
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    
     if (savedTodos) {
       const parsedTodos = JSON.parse(savedTodos).map((todo: any) => ({
         ...todo,
@@ -33,6 +37,14 @@ const TodoApp = () => {
         ongoingStartTime: todo.ongoingStartTime ? new Date(todo.ongoingStartTime) : undefined
       }));
       setTodos(parsedTodos);
+    }
+
+    // Show tour on first visit
+    if (!hasSeenTour) {
+      setTimeout(() => {
+        setShowTour(true);
+        localStorage.setItem('hasSeenTour', 'true');
+      }, 1000);
     }
   }, []);
 
@@ -190,9 +202,19 @@ const TodoApp = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-purple-600">
-          Todo List
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-purple-600">
+            Todo List
+          </h1>
+          <Button
+            onClick={() => setShowTour(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Show Tutorial
+          </Button>
+        </div>
 
         {/* Add Todo Input */}
         <div className="flex gap-2 mb-8">
@@ -202,7 +224,7 @@ const TodoApp = () => {
               value={newTodo}
               onChange={(e) => setNewTodo(e.target.value)}
               placeholder="Type your todo or paste an image (Ctrl+V)..."
-              className="pr-10"
+              className="pr-10 todo-input"
               onKeyPress={(e) => e.key === 'Enter' && addTodo()}
               onPaste={handlePaste}
             />
@@ -212,7 +234,7 @@ const TodoApp = () => {
           </div>
           <Button 
             onClick={addTodo} 
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-purple-600 hover:bg-purple-700 add-button"
             disabled={isPastingImage}
           >
             {isPastingImage ? (
@@ -227,7 +249,7 @@ const TodoApp = () => {
         {/* Todo Columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Todo Column */}
-          <Card className={getStatusColor('todo')}>
+          <Card className={`${getStatusColor('todo')} todo-column`}>
             <CardHeader className="bg-blue-200">
               <CardTitle className="text-blue-800 flex items-center gap-2">
                 <Plus className="w-5 h-5" />
@@ -239,7 +261,7 @@ const TodoApp = () => {
                 <div key={todo.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
                   {todo.image && (
                     <div 
-                      className="mb-2 cursor-pointer"
+                      className="mb-2 cursor-pointer todo-image"
                       onClick={() => setFullscreenImage(todo.image!)}
                     >
                       <Image
@@ -267,7 +289,7 @@ const TodoApp = () => {
           </Card>
 
           {/* Ongoing Column */}
-          <Card className={getStatusColor('ongoing')}>
+          <Card className={`${getStatusColor('ongoing')} ongoing-column`}>
             <CardHeader className="bg-yellow-200">
               <CardTitle className="text-yellow-800 flex items-center gap-2">
                 <Play className="w-5 h-5" />
@@ -279,7 +301,7 @@ const TodoApp = () => {
                 <div key={todo.id} className="bg-white p-3 rounded-lg border border-yellow-200 shadow-sm">
                   {todo.image && (
                     <div 
-                      className="mb-2 cursor-pointer"
+                      className="mb-2 cursor-pointer todo-image"
                       onClick={() => setFullscreenImage(todo.image!)}
                     >
                       <Image
@@ -313,7 +335,7 @@ const TodoApp = () => {
           </Card>
 
           {/* Done Column */}
-          <Card className={getStatusColor('done')}>
+          <Card className={`${getStatusColor('done')} done-column`}>
             <CardHeader className="bg-green-200">
               <CardTitle className="text-green-800 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
@@ -325,7 +347,7 @@ const TodoApp = () => {
                 <div key={todo.id} className="bg-white p-3 rounded-lg border border-green-200 shadow-sm">
                   {todo.image && (
                     <div 
-                      className="mb-2 cursor-pointer"
+                      className="mb-2 cursor-pointer todo-image"
                       onClick={() => setFullscreenImage(todo.image!)}
                     >
                       <Image
@@ -377,6 +399,9 @@ const TodoApp = () => {
           </div>
         </div>
       )}
+
+      {/* Tour Guide */}
+      <TourGuide isOpen={showTour} onClose={() => setShowTour(false)} />
     </div>
   );
 };
